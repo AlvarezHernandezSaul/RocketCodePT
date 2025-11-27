@@ -1,0 +1,71 @@
+services:
+  # Backend Node.js API
+  backend:
+    build:
+      context: ./api-node/api-node
+      dockerfile: Dockerfile
+    container_name: issue-tracker-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - SUPABASE_URL=${SUPABASE_URL:-https://dvqnnmvcuukubpwozyfa.supabase.co}
+      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2cW5ubXZjdXVrdWJwd296eWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwODc4MDUsImV4cCI6MjA3OTY2MzgwNX0.KrAqJwzGrdTdUz_mzfxc37fjxCQBedIRbFEEdZ3NSg0
+      - JWT_SECRET=7791824d35256ac4a1e8ae4fa55af617
+    volumes:
+      - ./api-node/api-node:/app
+      - /app/node_modules
+    depends_on:
+      - python-service
+    networks:
+      - issue-tracker-network
+    restart: unless-stopped
+
+  # Python Classification Service
+  python-service:
+    build:
+      context: ./python-service
+      dockerfile: Dockerfile
+    container_name: issue-tracker-classifier
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./python-service:/app
+    networks:
+      - issue-tracker-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./api-node/frontend
+      dockerfile: Dockerfile
+    container_name: issue-tracker-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./api-node/frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_CLASSIFIER_URL=http://localhost:8001
+    depends_on:
+      - backend
+      - python-service
+    networks:
+      - issue-tracker-network
+    restart: unless-stopped
+
+networks:
+  issue-tracker-network:
+    driver: bridge
+
+volumes:
+  node_modules_backend:
+  node_modules_frontend:

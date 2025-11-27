@@ -1,0 +1,31 @@
+{
+  "name": "issue-tracker-api",
+  "version": "1.0.0",
+  "description": "Backend API for Issue Tracker - Node.js with Express",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified. Add your tests here\" && exit 1"
+  },
+  "keywords": [
+    "express",
+    "api",
+    "issue-tracker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.84.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "postgres": "^3.4.7"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
