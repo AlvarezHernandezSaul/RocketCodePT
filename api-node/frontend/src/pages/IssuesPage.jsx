@@ -16,7 +16,6 @@ import {
   Sparkles,
   X,
   Zap,
-  Loader2,
   Trash2,
   GripVertical
 } from 'lucide-react';
@@ -38,8 +37,6 @@ const IssuesPage = () => {
     priority: 'medium',
     assignee_id: '',
   });
-  const [suggestedTags, setSuggestedTags] = useState([]);
-  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [draggedIssue, setDraggedIssue] = useState(null);
 
   useEffect(() => {
@@ -64,56 +61,16 @@ const IssuesPage = () => {
     }
   };
 
-  const generateTags = async () => {
-    if (!formData.title.trim()) return;
-
-    setIsGeneratingTags(true);
-    try {
-      const response = await fetch('http://localhost:8001/classify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description || ''
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestedTags(data.tags || []);
-      }
-    } catch (err) {
-      console.warn('Classification service unavailable:', err);
-      setSuggestedTags(['general']);
-    } finally {
-      setIsGeneratingTags(false);
-    }
-  };
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (formData.title) {
-        generateTags();
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [formData.title, formData.description]);
-
   const handleCreateIssue = async (e) => {
     e.preventDefault();
     try {
       const newIssue = await apiService.post('/issues', {
         ...formData,
         project_id: projectId,
-        tags: suggestedTags,
       });
       setIssues([...issues, newIssue.issue]);
       setShowCreateModal(false);
       setFormData({ title: '', description: '', priority: 'medium', assignee_id: '' });
-      setSuggestedTags([]);
     } catch (err) {
       setError('Failed to create issue');
       console.error('Error creating issue:', err);
@@ -433,7 +390,6 @@ const IssuesPage = () => {
                   onClick={() => {
                     setShowCreateModal(false);
                     setFormData({ title: '', description: '', priority: 'medium', assignee_id: '' });
-                    setSuggestedTags([]);
                   }}
                   className="p-2 hover:bg-white/20 rounded-xl transition-colors"
                 >
@@ -504,41 +460,12 @@ const IssuesPage = () => {
                 </div>
               </div>
               
-              {(suggestedTags.length > 0 || isGeneratingTags) && (
-                <div className="mb-8 p-5 bg-purple-50 rounded-2xl border-2 border-purple-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-bold text-purple-900 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      AI Suggested Tags
-                    </label>
-                    {isGeneratingTags && (
-                      <span className="flex items-center gap-2 text-xs text-purple-700 font-medium">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating...
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-white text-purple-700 ring-2 ring-purple-300 shadow-sm"
-                      >
-                        <Tag className="w-3.5 h-3.5" strokeWidth={2.5} />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     setFormData({ title: '', description: '', priority: 'medium', assignee_id: '' });
-                    setSuggestedTags([]);
                   }}
                   className="flex-1 px-6 py-3 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-2xl font-semibold transition-all"
                 >
